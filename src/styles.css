@@ -1,0 +1,9 @@
+body {
+  font-family: Inter, Roboto, sans-serif;
+  background: #f6f8fa;
+  margin: 0;
+}
+
+#root {
+  padding: 16px;
+}
