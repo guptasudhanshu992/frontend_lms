@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Container } from '@mui/material'
 import Videos from './pages/Videos'
 import LoginPage from './pages/LoginPage'
@@ -26,8 +26,24 @@ import { AuthProvider } from './context/AuthContext'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import { isTokenExpired, getRefreshToken, clearAuthData } from './utils/authUtils'
 
 export default function App() {
+  // Check token validity on app initialization
+  useEffect(() => {
+    console.log('[App] Checking token validity on load...');
+    const tokenExpired = isTokenExpired();
+    const refreshToken = getRefreshToken();
+    
+    console.log('[App] Token status:', { tokenExpired, hasRefreshToken: !!refreshToken });
+    
+    // If access token expired and no refresh token, clear everything
+    if (tokenExpired && !refreshToken) {
+      console.log('[App] Token expired with no refresh token, clearing auth data');
+      clearAuthData();
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <AuthProvider>

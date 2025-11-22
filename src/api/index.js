@@ -34,9 +34,21 @@ const processQueue = (error, token = null) => {
 // Request interceptor - add access token to requests
 api.interceptors.request.use(
   (config) => {
+    // Check if token is expired before making request
+    if (isTokenExpired()) {
+      console.log('[API Request] Token expired, checking refresh token...');
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) {
+        console.log('[API Request] No refresh token, clearing auth');
+        clearAuthData();
+        // Don't redirect here, let the 401 handler do it
+      }
+    }
+    
     const token = getAccessToken();
     console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
       hasToken: !!token,
+      isExpired: isTokenExpired(),
       tokenPreview: token ? token.substring(0, 20) + '...' : 'none'
     });
     if (token) {
@@ -107,10 +119,10 @@ api.interceptors.response.use(
 
     try {
       // Attempt to refresh the token
-      console.log('[API] Calling refresh endpoint...');
+      console.log('[API] Calling refresh endpoint with refresh token...');
       const response = await axios.post(
         `${BASE}/api/auth/refresh`,
-        {},
+        { refresh_token: refreshToken }, // Send refresh token in body
         { 
           withCredentials: true,
           headers: {
