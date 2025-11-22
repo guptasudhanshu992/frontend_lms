@@ -35,20 +35,35 @@ const processQueue = (error, token = null) => {
 api.interceptors.request.use(
   (config) => {
     const token = getAccessToken();
+    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
+      hasToken: !!token,
+      tokenPreview: token ? token.substring(0, 20) + '...' : 'none'
+    });
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
+    console.error('[API Request Error]', error);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor - handle token refresh on 401
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+      status: response.status
+    });
+    return response;
+  },
   async (error) => {
+    console.error(`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
+      status: error.response?.status,
+      detail: error.response?.data?.detail
+    });
+    
     const originalRequest = error.config;
 
     // If error is not 401 or request already retried, reject
@@ -56,9 +71,14 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    console.log('[API] 401 detected, attempting token refresh...');
+
     // Check if we have a refresh token
     const refreshToken = getRefreshToken();
+    console.log('[API] Refresh token available:', !!refreshToken);
+    
     if (!refreshToken) {
+      console.log('[API] No refresh token, clearing auth and redirecting');
       clearAuthData();
       if (window.location.pathname.startsWith('/admin')) {
         window.location.href = '/admin/login';
@@ -68,6 +88,7 @@ api.interceptors.response.use(
 
     // If already refreshing, queue this request
     if (isRefreshing) {
+      console.log('[API] Already refreshing, queueing request');
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       })
@@ -80,11 +101,13 @@ api.interceptors.response.use(
         });
     }
 
+    console.log('[API] Starting token refresh...');
     originalRequest._retry = true;
     isRefreshing = true;
 
     try {
       // Attempt to refresh the token
+      console.log('[API] Calling refresh endpoint...');
       const response = await axios.post(
         `${BASE}/api/auth/refresh`,
         {},
@@ -96,6 +119,7 @@ api.interceptors.response.use(
         }
       );
 
+      console.log('[API] Refresh successful, got new access token');
       const { access_token } = response.data;
       
       // Update stored token (keep existing refresh token and user)
@@ -111,9 +135,11 @@ api.interceptors.response.use(
 
       isRefreshing = false;
 
+      console.log('[API] Retrying original request...');
       // Retry original request
       return api(originalRequest);
     } catch (refreshError) {
+      console.error('[API] Token refresh failed:', refreshError);
       processQueue(refreshError, null);
       isRefreshing = false;
       

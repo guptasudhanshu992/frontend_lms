@@ -14,6 +14,7 @@ import {
   Stack,
   CircularProgress,
   Alert,
+  Pagination,
 } from '@mui/material';
 import {
   People,
@@ -28,16 +29,23 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const coursesPerPage = 20;
 
   useEffect(() => {
     fetchCourses();
-  }, []);
+  }, [page]);
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE}/api/public/courses`);
+      const offset = (page - 1) * coursesPerPage;
+      const response = await axios.get(`${API_BASE}/api/public/courses?limit=${coursesPerPage}&offset=${offset}`);
       setCourses(response.data.courses || []);
+      setTotal(response.data.total || response.data.courses?.length || 0);
+      setTotalPages(Math.ceil((response.data.total || response.data.courses?.length || 0) / coursesPerPage));
       setError('');
     } catch (err) {
       console.error('Failed to fetch courses:', err);
@@ -45,6 +53,11 @@ export default function CoursesPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -187,6 +200,21 @@ export default function CoursesPage() {
               </Grid>
             ))}
           </Grid>
+        )}
+
+        {/* Pagination */}
+        {courses.length > 0 && totalPages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
+            <Pagination 
+              count={totalPages} 
+              page={page} 
+              onChange={handlePageChange}
+              color="primary"
+              size="large"
+              showFirstButton
+              showLastButton
+            />
+          </Box>
         )}
       </Container>
 

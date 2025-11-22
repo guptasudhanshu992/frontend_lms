@@ -15,6 +15,7 @@ import {
   Alert,
   TextField,
   InputAdornment,
+  Pagination,
 } from '@mui/material';
 import { CalendarMonth, Person, Search } from '@mui/icons-material';
 import axios from 'axios';
@@ -29,21 +30,29 @@ export default function BlogPage() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const blogsPerPage = 20;
 
   useEffect(() => {
     fetchBlogs();
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     filterBlogs();
   }, [searchQuery, selectedCategory, blogs]);
 
   const fetchBlogs = async () => {
+    setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE}/api/public/blogs`);
+      const offset = (page - 1) * blogsPerPage;
+      const response = await axios.get(`${API_BASE}/api/public/blogs?limit=${blogsPerPage}&offset=${offset}`);
       const publishedBlogs = response.data.blogs.filter(blog => blog.published);
       setBlogs(publishedBlogs);
       setFilteredBlogs(publishedBlogs);
+      setTotal(response.data.total || publishedBlogs.length);
+      setTotalPages(Math.ceil((response.data.total || publishedBlogs.length) / blogsPerPage));
       setError('');
     } catch (err) {
       setError('Failed to load blog posts');
@@ -51,6 +60,11 @@ export default function BlogPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const filterBlogs = () => {
@@ -237,6 +251,21 @@ export default function BlogPage() {
               </Grid>
             ))}
           </Grid>
+        )}
+
+        {/* Pagination */}
+        {filteredBlogs.length > 0 && totalPages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
+            <Pagination 
+              count={totalPages} 
+              page={page} 
+              onChange={handlePageChange}
+              color="primary"
+              size="large"
+              showFirstButton
+              showLastButton
+            />
+          </Box>
         )}
       </Container>
     </Box>

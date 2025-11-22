@@ -29,19 +29,32 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
+      console.log('AdminLogin: Attempting login for:', email);
+      
       const response = await api.post('/api/admin/auth/login', {
         email,
         password,
       });
 
+      console.log('AdminLogin: Login response:', response.data);
+
       const { access_token, refresh_token, user } = response.data;
+
+      console.log('AdminLogin: Tokens received:', { 
+        access_token: access_token?.substring(0, 20) + '...', 
+        refresh_token: refresh_token?.substring(0, 20) + '...',
+        user 
+      });
 
       // Store tokens and user info using utility function
       setAuthData(access_token, refresh_token, user);
 
+      console.log('AdminLogin: Tokens stored, navigating to dashboard');
+
       // Redirect to admin dashboard
       navigate('/admin/dashboard');
     } catch (err) {
+      console.error('AdminLogin: Login failed:', err);
       setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);

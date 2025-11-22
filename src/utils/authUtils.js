@@ -12,6 +12,13 @@ const TOKEN_EXPIRY_KEY = 'token_expiry';
  * Store authentication data in localStorage
  */
 export const setAuthData = (accessToken, refreshToken, user, expiresIn = 900) => {
+  console.log('[AuthUtils] Setting auth data:', {
+    hasAccessToken: !!accessToken,
+    hasRefreshToken: !!refreshToken,
+    user: user,
+    expiresIn
+  });
+  
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
   if (refreshToken) {
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
@@ -22,20 +29,26 @@ export const setAuthData = (accessToken, refreshToken, user, expiresIn = 900) =>
   // Calculate expiry time (current time + expiresIn seconds - 30 second buffer)
   const expiryTime = Date.now() + (expiresIn - 30) * 1000;
   localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
+  
+  console.log('[AuthUtils] Auth data stored successfully');
 };
 
 /**
  * Get access token from localStorage
  */
 export const getAccessToken = () => {
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  console.log('[AuthUtils] Getting access token:', token ? 'Found (' + token.substring(0, 20) + '...)' : 'Not found');
+  return token;
 };
 
 /**
  * Get refresh token from localStorage
  */
 export const getRefreshToken = () => {
-  return localStorage.getItem(REFRESH_TOKEN_KEY);
+  const token = localStorage.getItem(REFRESH_TOKEN_KEY);
+  console.log('[AuthUtils] Getting refresh token:', token ? 'Found (' + token.substring(0, 20) + '...)' : 'Not found');
+  return token;
 };
 
 /**
