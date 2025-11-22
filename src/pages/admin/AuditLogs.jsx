@@ -20,9 +20,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import AdminLayout from '../../components/admin/AdminLayout';
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import api from '../../api';
 
 export default function AuditLogs() {
   const [logs, setLogs] = useState([]);
@@ -39,14 +37,11 @@ export default function AuditLogs() {
 
   const fetchLogs = async () => {
     try {
-      const token = localStorage.getItem('access_token');
       const params = new URLSearchParams();
       if (filterAction) params.append('action', filterAction);
       if (filterUserId) params.append('user_id', filterUserId);
       
-      const response = await axios.get(`${API_BASE}/api/admin/audit-logs?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(`/api/admin/audit-logs?${params}`);
       setLogs(response.data.logs || []);
       setError('');
     } catch (err) {

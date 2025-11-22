@@ -17,9 +17,7 @@ import {
 } from '@mui/material';
 import { Delete, Computer, Smartphone } from '@mui/icons-material';
 import AdminLayout from '../../components/admin/AdminLayout';
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import api from '../../api';
 
 export default function SessionsManagement() {
   const [sessions, setSessions] = useState([]);
@@ -34,10 +32,7 @@ export default function SessionsManagement() {
 
   const fetchSessions = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_BASE}/api/admin/sessions`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get('/api/admin/sessions');
       setSessions(response.data.sessions || []);
       setError('');
     } catch (err) {
@@ -52,10 +47,7 @@ export default function SessionsManagement() {
     if (!confirm('Are you sure you want to revoke this session?')) return;
     
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.delete(`${API_BASE}/api/admin/sessions/${sessionId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/admin/sessions/${sessionId}`);
       fetchSessions();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to revoke session');

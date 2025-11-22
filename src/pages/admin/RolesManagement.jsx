@@ -27,9 +27,7 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
 import AdminLayout from '../../components/admin/AdminLayout';
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import api from '../../api';
 
 const AVAILABLE_PERMISSIONS = [
   'user.read', 'user.write', 'user.delete',
@@ -56,10 +54,7 @@ export default function RolesManagement() {
 
   const fetchRoles = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_BASE}/api/admin/roles`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get('/api/admin/roles');
       setRoles(response.data.roles || []);
       setError('');
     } catch (err) {
@@ -72,10 +67,7 @@ export default function RolesManagement() {
 
   const handleCreateRole = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.post(`${API_BASE}/api/admin/roles`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post('/api/admin/roles', formData);
       setOpenDialog(false);
       setFormData({ name: '', description: '', permissions: [] });
       fetchRoles();
@@ -86,12 +78,9 @@ export default function RolesManagement() {
 
   const handleUpdateRole = async (roleId) => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.put(`${API_BASE}/api/admin/roles/${roleId}`, {
+      await api.put(`/api/admin/roles/${roleId}`, {
         permissions: formData.permissions,
         description: formData.description,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       setOpenDialog(false);
       setEditRole(null);
@@ -105,10 +94,7 @@ export default function RolesManagement() {
     if (!confirm('Are you sure you want to delete this role?')) return;
     
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.delete(`${API_BASE}/api/admin/roles/${roleId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/admin/roles/${roleId}`);
       fetchRoles();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to delete role');

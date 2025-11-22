@@ -34,9 +34,7 @@ import {
   Block,
 } from '@mui/icons-material';
 import AdminLayout from '../../components/admin/AdminLayout';
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import api from '../../api';
 
 export default function UsersManagement() {
   const [users, setUsers] = useState([]);
@@ -59,10 +57,7 @@ export default function UsersManagement() {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_BASE}/api/admin/users`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get('/api/admin/users');
       setUsers(response.data.users || []);
       setError('');
     } catch (err) {
@@ -75,10 +70,7 @@ export default function UsersManagement() {
 
   const handleCreateUser = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.post(`${API_BASE}/api/admin/users`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post('/api/admin/users', formData);
       setOpenDialog(false);
       setFormData({ email: '', password: '', full_name: '', role: 'student' });
       fetchUsers();
@@ -89,15 +81,12 @@ export default function UsersManagement() {
 
   const handleUpdateUser = async (userId) => {
     try {
-      const token = localStorage.getItem('access_token');
       const updateData = {
         full_name: formData.full_name,
         role: formData.role,
         is_active: formData.is_active,
       };
-      await axios.put(`${API_BASE}/api/admin/users/${userId}`, updateData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/api/admin/users/${userId}`, updateData);
       setOpenDialog(false);
       setEditUser(null);
       fetchUsers();
@@ -110,10 +99,7 @@ export default function UsersManagement() {
     if (!confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.delete(`${API_BASE}/api/admin/users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/admin/users/${userId}`);
       fetchUsers();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to delete user');

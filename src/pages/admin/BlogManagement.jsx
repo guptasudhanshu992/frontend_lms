@@ -33,9 +33,7 @@ import { Edit, Delete, Add, Category as CategoryIcon, Label as LabelIcon } from 
 import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import AdminLayout from '../../components/admin/AdminLayout';
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import api from '../../api';
 
 export default function BlogManagement() {
   const [blogs, setBlogs] = useState([]);
@@ -77,10 +75,7 @@ export default function BlogManagement() {
 
   const fetchBlogs = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_BASE}/api/admin/blogs`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get('/api/admin/blogs');
       setBlogs(response.data.blogs || []);
       setError('');
     } catch (err) {
@@ -93,10 +88,7 @@ export default function BlogManagement() {
 
   const fetchCategories = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_BASE}/api/admin/categories`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get('/api/admin/categories');
       setCategories(response.data.categories || []);
     } catch (err) {
       console.error('Failed to fetch categories', err);
@@ -105,10 +97,7 @@ export default function BlogManagement() {
 
   const fetchTags = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_BASE}/api/admin/tags`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get('/api/admin/tags');
       setTags(response.data.tags || []);
     } catch (err) {
       console.error('Failed to fetch tags', err);
@@ -123,10 +112,7 @@ export default function BlogManagement() {
         return;
       }
       
-      const token = localStorage.getItem('access_token');
-      await axios.post(`${API_BASE}/api/admin/blogs`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post('/api/admin/blogs', formData);
       setOpenDialog(false);
       resetForm();
       fetchBlogs();
@@ -144,10 +130,7 @@ export default function BlogManagement() {
         return;
       }
       
-      const token = localStorage.getItem('access_token');
-      await axios.put(`${API_BASE}/api/admin/blogs/${blogId}`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/api/admin/blogs/${blogId}`, formData);
       setOpenDialog(false);
       setEditBlog(null);
       resetForm();
@@ -162,10 +145,7 @@ export default function BlogManagement() {
     if (!confirm('Are you sure you want to delete this blog post?')) return;
     
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.delete(`${API_BASE}/api/admin/blogs/${blogId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/admin/blogs/${blogId}`);
       fetchBlogs();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to delete blog');
@@ -211,10 +191,7 @@ export default function BlogManagement() {
   // Category Management Functions
   const handleCreateCategory = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.post(`${API_BASE}/api/admin/categories`, categoryFormData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post('/api/admin/categories', categoryFormData);
       setOpenCategoryDialog(false);
       setCategoryFormData({ name: '', description: '' });
       fetchCategories();
@@ -225,10 +202,7 @@ export default function BlogManagement() {
 
   const handleUpdateCategory = async (categoryId) => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.put(`${API_BASE}/api/admin/categories/${categoryId}`, categoryFormData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/api/admin/categories/${categoryId}`, categoryFormData);
       setOpenCategoryDialog(false);
       setEditCategory(null);
       setCategoryFormData({ name: '', description: '' });
@@ -241,10 +215,7 @@ export default function BlogManagement() {
   const handleDeleteCategory = async (categoryId) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.delete(`${API_BASE}/api/admin/categories/${categoryId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/admin/categories/${categoryId}`);
       fetchCategories();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to delete category');
@@ -254,10 +225,7 @@ export default function BlogManagement() {
   // Tag Management Functions
   const handleCreateTag = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.post(`${API_BASE}/api/admin/tags`, tagFormData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post('/api/admin/tags', tagFormData);
       setOpenTagDialog(false);
       setTagFormData({ name: '' });
       fetchTags();
@@ -268,10 +236,7 @@ export default function BlogManagement() {
 
   const handleUpdateTag = async (tagId) => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.put(`${API_BASE}/api/admin/tags/${tagId}`, tagFormData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/api/admin/tags/${tagId}`, tagFormData);
       setOpenTagDialog(false);
       setEditTag(null);
       setTagFormData({ name: '' });
@@ -284,10 +249,7 @@ export default function BlogManagement() {
   const handleDeleteTag = async (tagId) => {
     if (!confirm('Are you sure you want to delete this tag?')) return;
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.delete(`${API_BASE}/api/admin/tags/${tagId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/admin/tags/${tagId}`);
       fetchTags();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to delete tag');

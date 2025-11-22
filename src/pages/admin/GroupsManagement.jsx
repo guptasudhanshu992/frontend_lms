@@ -27,9 +27,7 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
 import AdminLayout from '../../components/admin/AdminLayout';
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import api from '../../api';
 
 const AVAILABLE_PERMISSIONS = [
   'user.read', 'user.write', 'user.delete',
@@ -56,10 +54,7 @@ export default function GroupsManagement() {
 
   const fetchGroups = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_BASE}/api/admin/groups`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get('/api/admin/groups');
       setGroups(response.data.groups || []);
       setError('');
     } catch (err) {
@@ -72,10 +67,7 @@ export default function GroupsManagement() {
 
   const handleCreateGroup = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.post(`${API_BASE}/api/admin/groups`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post('/api/admin/groups', formData);
       setOpenDialog(false);
       setFormData({ name: '', description: '', permissions: [] });
       fetchGroups();
@@ -86,12 +78,9 @@ export default function GroupsManagement() {
 
   const handleUpdateGroup = async (groupId) => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.put(`${API_BASE}/api/admin/groups/${groupId}`, {
+      await api.put(`/api/admin/groups/${groupId}`, {
         permissions: formData.permissions,
         description: formData.description,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       setOpenDialog(false);
       setEditGroup(null);
@@ -105,10 +94,7 @@ export default function GroupsManagement() {
     if (!confirm('Are you sure you want to delete this group?')) return;
     
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.delete(`${API_BASE}/api/admin/groups/${groupId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/admin/groups/${groupId}`);
       fetchGroups();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to delete group');

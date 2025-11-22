@@ -27,9 +27,7 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Add, Visibility } from '@mui/icons-material';
 import AdminLayout from '../../components/admin/AdminLayout';
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import api from '../../api';
 
 export default function CoursesManagement() {
   const [courses, setCourses] = useState([]);
@@ -57,10 +55,7 @@ export default function CoursesManagement() {
 
   const fetchCourses = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_BASE}/api/admin/courses`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get('/api/admin/courses');
       setCourses(response.data.courses || []);
       setError('');
     } catch (err) {
@@ -73,10 +68,7 @@ export default function CoursesManagement() {
 
   const handleCreateCourse = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.post(`${API_BASE}/api/admin/courses`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post('/api/admin/courses', formData);
       setOpenDialog(false);
       resetForm();
       fetchCourses();
@@ -87,10 +79,7 @@ export default function CoursesManagement() {
 
   const handleUpdateCourse = async (courseId) => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.put(`${API_BASE}/api/admin/courses/${courseId}`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/api/admin/courses/${courseId}`, formData);
       setOpenDialog(false);
       setEditCourse(null);
       resetForm();
@@ -104,10 +93,7 @@ export default function CoursesManagement() {
     if (!confirm('Are you sure you want to delete this course?')) return;
     
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.delete(`${API_BASE}/api/admin/courses/${courseId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/admin/courses/${courseId}`);
       fetchCourses();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to delete course');
