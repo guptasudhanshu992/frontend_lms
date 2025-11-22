@@ -12,9 +12,8 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff, AdminPanelSettings } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import api from '../../api';
+import { setAuthData } from '../../utils/authUtils';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -30,17 +29,15 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_BASE}/api/admin/auth/login`, {
+      const response = await api.post('/api/admin/auth/login', {
         email,
         password,
       });
 
       const { access_token, refresh_token, user } = response.data;
 
-      // Store tokens and user info
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('refresh_token', refresh_token);
-      localStorage.setItem('user', JSON.stringify(user));
+      // Store tokens and user info using utility function
+      setAuthData(access_token, refresh_token, user);
 
       // Redirect to admin dashboard
       navigate('/admin/dashboard');

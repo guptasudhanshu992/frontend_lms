@@ -15,13 +15,12 @@ import {
   TrendingUp,
 } from '@mui/icons-material';
 import AdminLayout from '../../components/admin/AdminLayout';
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+import useAdminApi from '../../hooks/useAdminApi';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const adminApi = useAdminApi();
 
   useEffect(() => {
     fetchStats();
@@ -29,11 +28,8 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_BASE}/api/admin/stats`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setStats(response.data);
+      const data = await adminApi.get('/api/admin/stats');
+      setStats(data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     } finally {
