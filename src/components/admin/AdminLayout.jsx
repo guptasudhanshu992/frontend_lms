@@ -28,6 +28,9 @@ import {
   Group,
   School,
   Article,
+  Payment,
+  LocalOffer,
+  BarChart,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -38,10 +41,7 @@ const menuItems = [
   { text: 'Users', icon: <People />, path: '/admin/users' },
   { text: 'Courses', icon: <School />, path: '/admin/courses' },
   { text: 'Blog', icon: <Article />, path: '/admin/blog' },
-  { text: 'Roles', icon: <AdminPanelSettings />, path: '/admin/roles' },
-  { text: 'Groups', icon: <Group />, path: '/admin/groups' },
-  { text: 'Sessions', icon: <Security />, path: '/admin/sessions' },
-  { text: 'Audit Logs', icon: <History />, path: '/admin/audit-logs' },
+  { text: 'Analytics', icon: <Payment />, path: '/admin/payments' },
 ];
 
 export default function AdminLayout({ children }) {

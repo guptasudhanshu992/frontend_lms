@@ -16,6 +16,7 @@ import {
 } from '@mui/icons-material';
 import AdminLayout from '../../components/admin/AdminLayout';
 import useAdminApi from '../../hooks/useAdminApi';
+import SEO from '../../components/SEO';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -67,14 +68,29 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <Typography variant="h4" gutterBottom>
+      <SEO 
+        title="Admin Dashboard - LMS Management"
+        description="Manage courses, users, content, and analytics from your centralized learning management system dashboard. Monitor active sessions, track user engagement, and oversee course administration."
+        keywords="admin dashboard, LMS management, course administration, user management, system analytics"
+        url="https://lms-platform.com/admin"
+      />
+      
+      <Typography 
+        variant="h4" 
+        gutterBottom
+        sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+      >
         Dashboard
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+      <Typography 
+        variant="body1" 
+        color="text.secondary" 
+        sx={{ mb: { xs: 3, sm: 4 } }}
+      >
         Overview of your learning management system
       </Typography>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, sm: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Users"
@@ -109,10 +125,14 @@ export default function AdminDashboard() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={3} sx={{ mt: 2 }}>
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: { xs: 1, sm: 2 } }}>
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
+          <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+            <Typography 
+              variant="h6" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}
+            >
               Recent Activity
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -121,8 +141,12 @@ export default function AdminDashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
+          <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+            <Typography 
+              variant="h6" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}
+            >
               Quick Actions
             </Typography>
             <Typography variant="body2" color="text.secondary">

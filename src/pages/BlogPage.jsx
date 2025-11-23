@@ -219,8 +219,12 @@ export default function BlogPage() {
                     />
                   )}
                   <CardContent sx={{ flexGrow: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Chip label={blog.category} size="small" color="primary" />
+                    <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                      {blog.featured && <Chip label="Featured" size="small" color="secondary" />}
+                      {blog.category && <Chip label={blog.category} size="small" color="primary" />}
+                      {Array.isArray(blog.tags) && blog.tags.slice(0, 2).map((tag, idx) => (
+                        <Chip key={idx} label={tag} size="small" variant="outlined" />
+                      ))}
                     </Box>
                     <Typography variant="h5" component="h2" gutterBottom fontWeight={600}>
                       {blog.title}
@@ -245,6 +249,9 @@ export default function BlogPage() {
                           })}
                         </Typography>
                       </Box>
+                      {blog.reading_time && (
+                        <Chip label={`${blog.reading_time} min read`} size="small" />
+                      )}
                     </Box>
                   </CardContent>
                 </Card>

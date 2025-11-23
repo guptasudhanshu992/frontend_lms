@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -30,24 +31,12 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import api from '../../api';
 
 export default function CoursesManagement() {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editCourse, setEditCourse] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    instructor: '',
-    duration: '',
-    level: 'Beginner',
-    price: '',
-    category: 'Finance',
-    image_url: '',
-    published: true,
-  });
 
   useEffect(() => {
     fetchCourses();
@@ -66,29 +55,6 @@ export default function CoursesManagement() {
     }
   };
 
-  const handleCreateCourse = async () => {
-    try {
-      await api.post('/api/admin/courses', formData);
-      setOpenDialog(false);
-      resetForm();
-      fetchCourses();
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create course');
-    }
-  };
-
-  const handleUpdateCourse = async (courseId) => {
-    try {
-      await api.put(`/api/admin/courses/${courseId}`, formData);
-      setOpenDialog(false);
-      setEditCourse(null);
-      resetForm();
-      fetchCourses();
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update course');
-    }
-  };
-
   const handleDeleteCourse = async (courseId) => {
     if (!confirm('Are you sure you want to delete this course?')) return;
     
@@ -100,40 +66,12 @@ export default function CoursesManagement() {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      instructor: '',
-      duration: '',
-      level: 'Beginner',
-      price: '',
-      category: 'Finance',
-      image_url: '',
-      published: true,
-    });
-  };
-
   const openCreateDialog = () => {
-    setEditCourse(null);
-    resetForm();
-    setOpenDialog(true);
+    navigate('/admin/courses/new');
   };
 
   const openEditDialog = (course) => {
-    setEditCourse(course);
-    setFormData({
-      title: course.title,
-      description: course.description,
-      instructor: course.instructor,
-      duration: course.duration,
-      level: course.level,
-      price: course.price,
-      category: course.category,
-      image_url: course.image_url || '',
-      published: course.published,
-    });
-    setOpenDialog(true);
+    navigate(`/admin/courses/edit/${course.id}`);
   };
 
   if (loading) {
@@ -148,12 +86,15 @@ export default function CoursesManagement() {
 
   return (
     <AdminLayout>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
         <Typography variant="h4">Courses Management</Typography>
         <Button variant="contained" startIcon={<Add />} onClick={openCreateDialog}>
           Create Course
         </Button>
       </Box>
+      <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
+        Manage Courses, Sections and Lessons
+      </Typography>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
@@ -217,113 +158,6 @@ export default function CoursesManagement() {
           }}
         />
       </TableContainer>
-
-      {/* Create/Edit Course Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>{editCourse ? 'Edit Course' : 'Create New Course'}</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Title"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            margin="normal"
-            required
-          />
-          <TextField
-            fullWidth
-            label="Description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            margin="normal"
-            multiline
-            rows={3}
-            required
-          />
-          <TextField
-            fullWidth
-            label="Instructor"
-            value={formData.instructor}
-            onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
-            margin="normal"
-            required
-          />
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              fullWidth
-              label="Duration (e.g., 8 weeks)"
-              value={formData.duration}
-              onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-              margin="normal"
-              required
-            />
-            <TextField
-              fullWidth
-              label="Price"
-              type="number"
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              margin="normal"
-              required
-            />
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Level</InputLabel>
-              <Select
-                value={formData.level}
-                onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                label="Level"
-              >
-                <MenuItem value="Beginner">Beginner</MenuItem>
-                <MenuItem value="Intermediate">Intermediate</MenuItem>
-                <MenuItem value="Advanced">Advanced</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                label="Category"
-              >
-                <MenuItem value="Finance">Finance</MenuItem>
-                <MenuItem value="Investment">Investment</MenuItem>
-                <MenuItem value="Trading">Trading</MenuItem>
-                <MenuItem value="Accounting">Accounting</MenuItem>
-                <MenuItem value="Economics">Economics</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-          <TextField
-            fullWidth
-            label="Image URL"
-            value={formData.image_url}
-            onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-            margin="normal"
-          />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Status</InputLabel>
-            <Select
-              value={formData.published}
-              onChange={(e) => setFormData({ ...formData, published: e.target.value })}
-              label="Status"
-            >
-              <MenuItem value={true}>Published</MenuItem>
-              <MenuItem value={false}>Draft</MenuItem>
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={() => editCourse ? handleUpdateCourse(editCourse.id) : handleCreateCourse()}
-          >
-            {editCourse ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </AdminLayout>
   );
 }

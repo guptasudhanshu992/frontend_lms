@@ -14,7 +14,9 @@ import {
   Stack,
   InputAdornment,
   IconButton,
-  Link
+  Link,
+  Alert,
+  CircularProgress
 } from '@mui/material'
 import { 
   PersonAdd, 
@@ -26,35 +28,64 @@ import {
 import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import api from '../api'
 import SocialButton from '../components/SocialButton'
+import SEO from '../components/SEO'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [consent, setConsent] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const navigate = useNavigate()
 
   const onSubmit = async (e) => {
     e.preventDefault()
+    setError('')
+    setSuccess('')
+    setLoading(true)
+
     try {
-      await api.post('/api/auth/register', { email, password, consent })
-      alert('Registered successfully! Check your email for verification.')
-      navigate('/login')
+      const response = await api.post('/api/auth/register', { email, password, consent })
+      
+      if (response.data && response.data.ok) {
+        setSuccess(response.data.message || 'Registration successful! Check your email for verification.')
+        
+        // Redirect to login page after 2 seconds
+        setTimeout(() => {
+          navigate('/login')
+        }, 2000)
+      } else {
+        setError('Registration failed. Please try again.')
+      }
     } catch (err) {
-      alert('Registration failed')
+      console.error('Registration error:', err)
+      const errorMessage = err.response?.data?.detail || 'Registration failed. Please try again.'
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: 'calc(100vh - 200px)',
-        display: 'flex',
-        alignItems: 'center',
-        bgcolor: '#f5f5f5',
-        py: 8
-      }}
-    >
+    <>
+      <SEO 
+        title="Create Account - Start Your Learning Journey"
+        description="Join our learning management system to access 300+ professional development courses, earn certifications, and advance your career. Free registration with instant access to finance and business courses."
+        keywords="register account, sign up LMS, create student account, enroll courses, free registration, online learning signup"
+        url="https://lms-platform.com/register"
+      />
+      <Box
+        sx={{
+          minHeight: 'calc(100vh - 200px)',
+          display: 'flex',
+          alignItems: 'center',
+          bgcolor: '#f5f5f5',
+          py: { xs: 4, sm: 6, md: 8 },
+          px: { xs: 2, sm: 3 }
+        }}
+      >
       <Container maxWidth="sm">
         <Card
           elevation={2}
@@ -67,7 +98,7 @@ export default function RegisterPage() {
             }
           }}
         >
-          <CardContent sx={{ p: 5 }}>
+          <CardContent sx={{ p: { xs: 3, sm: 4, md: 5 } }}>
             {/* Header */}
             <Box sx={{ textAlign: 'center', mb: 4 }}>
               <Avatar 
@@ -93,6 +124,20 @@ export default function RegisterPage() {
             {/* Form */}
             <Box component="form" onSubmit={onSubmit}>
               <Stack spacing={3}>
+                {/* Error Alert */}
+                {error && (
+                  <Alert severity="error" onClose={() => setError('')}>
+                    {error}
+                  </Alert>
+                )}
+
+                {/* Success Alert */}
+                {success && (
+                  <Alert severity="success">
+                    {success}
+                  </Alert>
+                )}
+
                 <TextField
                   label="Email Address"
                   type="email"
@@ -181,7 +226,7 @@ export default function RegisterPage() {
                   variant="contained"
                   size="large"
                   fullWidth
-                  disabled={!consent}
+                  disabled={!consent || loading}
                   sx={{
                     py: 1.5,
                     fontSize: '1rem',
@@ -189,12 +234,19 @@ export default function RegisterPage() {
                     boxShadow: 2,
                     transition: 'all 0.3s',
                     '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: 4
+                      transform: loading ? 'none' : 'translateY(-2px)',
+                      boxShadow: loading ? 2 : 4
                     }
                   }}
                 >
-                  Create Account
+                  {loading ? (
+                    <>
+                      <CircularProgress size={24} sx={{ mr: 1 }} color="inherit" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    'Create Account'
+                  )}
                 </Button>
               </Stack>
 
@@ -240,5 +292,6 @@ export default function RegisterPage() {
         </Card>
       </Container>
     </Box>
+    </>
   )
 }

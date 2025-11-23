@@ -18,6 +18,21 @@ import axios from 'axios';
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 export default function BlogDetailPage() {
+    const [scrollProgress, setScrollProgress] = useState(0);
+
+    useEffect(() => {
+      const handleScroll = () => {
+        const article = document.getElementById('blog-article');
+        if (!article) return;
+        const rect = article.getBoundingClientRect();
+        const winHeight = window.innerHeight;
+        const totalHeight = article.offsetHeight;
+        const scrolled = Math.min(Math.max(winHeight - rect.top, 0), totalHeight);
+        setScrollProgress(Math.round((scrolled / totalHeight) * 100));
+      };
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }, [blog]);
   const { id } = useParams();
   const navigate = useNavigate();
   const [blog, setBlog] = useState(null);
@@ -84,6 +99,12 @@ export default function BlogDetailPage() {
 
   return (
     <Box sx={{ bgcolor: '#f8f9fa', minHeight: '100vh', py: 0 }}>
+      {/* Reading Progress Bar */}
+      <Box sx={{ position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 1200 }}>
+        <Box sx={{ height: 4, bgcolor: 'grey.300', width: '100%' }}>
+          <Box sx={{ height: 4, bgcolor: 'primary.main', width: `${scrollProgress}%`, transition: 'width 0.2s' }} />
+        </Box>
+      </Box>
       <Container maxWidth="md" sx={{ py: 4 }}>
         {/* Back Button */}
         <Button
@@ -96,7 +117,16 @@ export default function BlogDetailPage() {
 
         {/* Article Header */}
         <Paper elevation={0} sx={{ p: 4, mb: 4, bgcolor: 'transparent' }}>
-          <Chip label={blog.category} color="primary" sx={{ mb: 2 }} />
+          <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+            {blog.featured && <Chip label="Featured" color="secondary" />}
+            {Array.isArray(blog.categories) && blog.categories.map((cat, idx) => (
+              <Chip key={idx} label={cat} color="primary" />
+            ))}
+            {blog.category && <Chip label={blog.category} color="primary" />}
+            {Array.isArray(blog.tags) && blog.tags.map((tag, idx) => (
+              <Chip key={idx} label={tag} color="info" />
+            ))}
+          </Box>
           <Typography variant="h3" component="h1" gutterBottom fontWeight={700}>
             {blog.title}
           </Typography>
@@ -105,7 +135,7 @@ export default function BlogDetailPage() {
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ bgcolor: 'primary.main' }}>
-                {blog.author[0]}
+                {blog.author && blog.author[0]}
               </Avatar>
               <Box>
                 <Typography variant="body1" fontWeight={600}>
@@ -114,12 +144,15 @@ export default function BlogDetailPage() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CalendarMonth fontSize="small" color="action" />
                   <Typography variant="body2" color="text.secondary">
-                    {new Date(blog.created_at).toLocaleDateString('en-US', {
+                    {blog.created_at && new Date(blog.created_at).toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
                       year: 'numeric',
                     })}
                   </Typography>
+                  {blog.reading_time && (
+                    <Chip label={`${blog.reading_time} min read`} size="small" sx={{ ml: 2 }} />
+                  )}
                 </Box>
               </Box>
             </Box>
@@ -138,7 +171,7 @@ export default function BlogDetailPage() {
             <Box
               component="img"
               src={blog.image_url}
-              alt={blog.title}
+              alt={blog.image_alt || blog.title}
               sx={{
                 width: '100%',
                 height: 'auto',
@@ -162,17 +195,30 @@ export default function BlogDetailPage() {
           <Divider sx={{ mb: 4 }} />
 
           {/* Content */}
-          <Typography
-            variant="body1"
-            sx={{
-              lineHeight: 1.8,
-              fontSize: '1.1rem',
-              whiteSpace: 'pre-wrap',
-              '& p': { mb: 2 },
-            }}
-          >
-            {blog.content}
-          </Typography>
+          <Box id="blog-article">
+            <Typography
+              variant="body1"
+              sx={{
+                lineHeight: 1.8,
+                fontSize: '1.1rem',
+                whiteSpace: 'pre-wrap',
+                '& p': { mb: 2 },
+              }}
+              component="div"
+              dangerouslySetInnerHTML={{ __html: blog.content }}
+            />
+          </Box>
+                <Divider sx={{ my: 4 }} />
+                <Box sx={{ mb: 2 }}>
+                  {blog.meta_title && <Typography variant="subtitle2">Meta Title: {blog.meta_title}</Typography>}
+                  {blog.meta_description && <Typography variant="subtitle2">Meta Description: {blog.meta_description}</Typography>}
+                  {blog.canonical_url && <Typography variant="subtitle2">Canonical URL: {blog.canonical_url}</Typography>}
+                  {blog.og_title && <Typography variant="subtitle2">OG Title: {blog.og_title}</Typography>}
+                  {blog.og_description && <Typography variant="subtitle2">OG Description: {blog.og_description}</Typography>}
+                  {blog.og_image_url && (
+                    <Box component="img" src={blog.og_image_url} alt={blog.og_image_alt || 'OG Image'} sx={{ maxHeight: 80, mt: 1 }} />
+                  )}
+                </Box>
         </Paper>
 
         {/* Related Articles */}

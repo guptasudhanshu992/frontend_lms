@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import {
   Box,
   Paper,
@@ -33,16 +36,16 @@ import { Edit, Delete, Add, Category as CategoryIcon, Label as LabelIcon } from 
 import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import AdminLayout from '../../components/admin/AdminLayout';
+import SEO from '../../components/SEO';
 import api from '../../api';
 
 export default function BlogManagement() {
+  const navigate = useNavigate();
   const [blogs, setBlogs] = useState([]);
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editBlog, setEditBlog] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [tabValue, setTabValue] = useState(0);
@@ -54,18 +57,6 @@ export default function BlogManagement() {
   const [editTag, setEditTag] = useState(null);
   const [categoryFormData, setCategoryFormData] = useState({ name: '', description: '' });
   const [tagFormData, setTagFormData] = useState({ name: '' });
-  
-  const [formData, setFormData] = useState({
-    title: '',
-    excerpt: '',
-    content: '',
-    author: '',
-    category: '',
-    image_url: '',
-    published: false,
-    publish_at: null,
-    tags: [],
-  });
 
   useEffect(() => {
     fetchBlogs();
@@ -104,43 +95,6 @@ export default function BlogManagement() {
     }
   };
 
-  const handleCreateBlog = async () => {
-    try {
-      // Validate publish_at is in future if provided
-      if (formData.publish_at && new Date(formData.publish_at) <= new Date()) {
-        setError('Publish date must be in the future');
-        return;
-      }
-      
-      await api.post('/api/admin/blogs', formData);
-      setOpenDialog(false);
-      resetForm();
-      fetchBlogs();
-      setError('');
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create blog');
-    }
-  };
-
-  const handleUpdateBlog = async (blogId) => {
-    try {
-      // Validate publish_at is in future if provided
-      if (formData.publish_at && new Date(formData.publish_at) <= new Date()) {
-        setError('Publish date must be in the future');
-        return;
-      }
-      
-      await api.put(`/api/admin/blogs/${blogId}`, formData);
-      setOpenDialog(false);
-      setEditBlog(null);
-      resetForm();
-      fetchBlogs();
-      setError('');
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update blog');
-    }
-  };
-
   const handleDeleteBlog = async (blogId) => {
     if (!confirm('Are you sure you want to delete this blog post?')) return;
     
@@ -152,40 +106,12 @@ export default function BlogManagement() {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      excerpt: '',
-      content: '',
-      author: '',
-      category: '',
-      image_url: '',
-      published: false,
-      publish_at: null,
-      tags: [],
-    });
-  };
-
   const openCreateDialog = () => {
-    setEditBlog(null);
-    resetForm();
-    setOpenDialog(true);
+    navigate('/admin/blog/new');
   };
 
   const openEditDialog = (blog) => {
-    setEditBlog(blog);
-    setFormData({
-      title: blog.title,
-      excerpt: blog.excerpt,
-      content: blog.content,
-      author: blog.author,
-      category: blog.category,
-      image_url: blog.image_url || '',
-      published: blog.published,
-      publish_at: blog.publish_at ? new Date(blog.publish_at) : null,
-      tags: blog.tags || [],
-    });
-    setOpenDialog(true);
+    navigate(`/admin/blog/edit/${blog.id}`);
   };
 
   // Category Management Functions
@@ -256,6 +182,7 @@ export default function BlogManagement() {
     }
   };
 
+
   if (loading) {
     return (
       <AdminLayout>
@@ -266,27 +193,87 @@ export default function BlogManagement() {
     );
   }
 
+  // TabPanel helper
+  function TabPanel(props) {
+    const { children, value, index, ...other } = props;
+    return (
+      <div
+        role="tabpanel"
+        hidden={value !== index}
+        id={`blog-tabpanel-${index}`}
+        aria-labelledby={`blog-tab-${index}`}
+        {...other}
+      >
+        {value === index && <Box sx={{ pt: 1 }}>{children}</Box>}
+      </div>
+    );
+  }
+
   return (
     <AdminLayout>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Blog Management</Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={openCreateDialog}>
-          Create Blog Post
-        </Button>
+      <SEO 
+        title="Blog Management - Admin Panel"
+        description="Manage blog posts, categories, and tags for your learning management system."
+        keywords="blog management, category management, tag management, LMS administration"
+        url="https://lms-platform.com/admin/blog"
+      />
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Typography 
+          variant="h4"
+          sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+        >
+          Blog Management
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {tabValue === 0 && (
+            <Button variant="contained" startIcon={<Add />} onClick={openCreateDialog}>
+              Create Blog Post
+            </Button>
+          )}
+          {tabValue === 1 && (
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => {
+                setEditCategory(null);
+                setCategoryFormData({ name: '', description: '' });
+                setOpenCategoryDialog(true);
+              }}
+            >
+              Add Category
+            </Button>
+          )}
+          {tabValue === 2 && (
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => {
+                setEditTag(null);
+                setTagFormData({ name: '' });
+                setOpenTagDialog(true);
+              }}
+            >
+              Add Tag
+            </Button>
+          )}
+        </Box>
+      </Box>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+        Manage blog posts, categories, and tags
+      </Typography>
+
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
+          <Tab label="Blog Posts" />
+          <Tab label="Categories" />
+          <Tab label="Tags" />
+        </Tabs>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
 
-      <Paper sx={{ mb: 3 }}>
-        <Tabs value={tabValue} onChange={(e, val) => setTabValue(val)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label="Blog Posts" />
-          <Tab label="Categories" icon={<CategoryIcon />} iconPosition="start" />
-          <Tab label="Tags" icon={<LabelIcon />} iconPosition="start" />
-        </Tabs>
-      </Paper>
-
       {/* Blog Posts Tab */}
-      {tabValue === 0 && (
+      <TabPanel value={tabValue} index={0}>
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -364,261 +351,93 @@ export default function BlogManagement() {
             }}
           />
         </TableContainer>
-      )}
+      </TabPanel>
 
       {/* Categories Tab */}
-      {tabValue === 1 && (
-        <Paper>
-          <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Categories</Typography>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<Add />}
-              onClick={() => {
-                setEditCategory(null);
-                setCategoryFormData({ name: '', description: '' });
-                setOpenCategoryDialog(true);
-              }}
-            >
-              Add Category
-            </Button>
-          </Box>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Slug</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+      <TabPanel value={tabValue} index={1}>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>ID</TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Slug</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {categories.map((category) => (
+                <TableRow key={category.id}>
+                  <TableCell>{category.id}</TableCell>
+                  <TableCell>{category.name}</TableCell>
+                  <TableCell>
+                    <Chip label={category.slug} size="small" variant="outlined" />
+                  </TableCell>
+                  <TableCell>{category.description || '-'}</TableCell>
+                  <TableCell align="right">
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setEditCategory(category);
+                        setCategoryFormData({ name: category.name, description: category.description || '' });
+                        setOpenCategoryDialog(true);
+                      }}
+                    >
+                      <Edit />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleDeleteCategory(category.id)} color="error">
+                      <Delete />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {categories.map((category) => (
-                  <TableRow key={category.id}>
-                    <TableCell>{category.id}</TableCell>
-                    <TableCell>{category.name}</TableCell>
-                    <TableCell>
-                      <Chip label={category.slug} size="small" variant="outlined" />
-                    </TableCell>
-                    <TableCell>{category.description || '-'}</TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          setEditCategory(category);
-                          setCategoryFormData({ name: category.name, description: category.description || '' });
-                          setOpenCategoryDialog(true);
-                        }}
-                      >
-                        <Edit />
-                      </IconButton>
-                      <IconButton size="small" onClick={() => handleDeleteCategory(category.id)} color="error">
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      )}
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </TabPanel>
 
       {/* Tags Tab */}
-      {tabValue === 2 && (
-        <Paper>
-          <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Tags</Typography>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<Add />}
-              onClick={() => {
-                setEditTag(null);
-                setTagFormData({ name: '' });
-                setOpenTagDialog(true);
-              }}
-            >
-              Add Tag
-            </Button>
-          </Box>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Slug</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+      <TabPanel value={tabValue} index={2}>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>ID</TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Slug</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {tags.map((tag) => (
+                <TableRow key={tag.id}>
+                  <TableCell>{tag.id}</TableCell>
+                  <TableCell>{tag.name}</TableCell>
+                  <TableCell>
+                    <Chip label={tag.slug} size="small" variant="outlined" />
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setEditTag(tag);
+                        setTagFormData({ name: tag.name });
+                        setOpenTagDialog(true);
+                      }}
+                    >
+                      <Edit />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleDeleteTag(tag.id)} color="error">
+                      <Delete />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {tags.map((tag) => (
-                  <TableRow key={tag.id}>
-                    <TableCell>{tag.id}</TableCell>
-                    <TableCell>{tag.name}</TableCell>
-                    <TableCell>
-                      <Chip label={tag.slug} size="small" variant="outlined" />
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          setEditTag(tag);
-                          setTagFormData({ name: tag.name });
-                          setOpenTagDialog(true);
-                        }}
-                      >
-                        <Edit />
-                      </IconButton>
-                      <IconButton size="small" onClick={() => handleDeleteTag(tag.id)} color="error">
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      )}
-
-      {/* Create/Edit Blog Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>{editBlog ? 'Edit Blog Post' : 'Create New Blog Post'}</DialogTitle>
-        <DialogContent>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <TextField
-              fullWidth
-              label="Title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              margin="normal"
-              required
-            />
-            <TextField
-              fullWidth
-              label="Excerpt"
-              value={formData.excerpt}
-              onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-              margin="normal"
-              multiline
-              rows={2}
-              required
-            />
-            <TextField
-              fullWidth
-              label="Content"
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              margin="normal"
-              multiline
-              rows={6}
-              required
-            />
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                fullWidth
-                label="Author"
-                value={formData.author}
-                onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                margin="normal"
-                required
-              />
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  label="Category"
-                >
-                  {categories.map((cat) => (
-                    <MenuItem key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-            <TextField
-              fullWidth
-              label="Image URL"
-              value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-              margin="normal"
-            />
-            <Autocomplete
-              multiple
-              options={tags}
-              getOptionLabel={(option) => option.name}
-              value={tags.filter(t => formData.tags.includes(t.id))}
-              onChange={(e, newValue) => {
-                setFormData({ ...formData, tags: newValue.map(v => v.id) });
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Tags"
-                  margin="normal"
-                  placeholder="Select tags"
-                />
-              )}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    label={option.name}
-                    {...getTagProps({ index })}
-                    size="small"
-                  />
-                ))
-              }
-            />
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={formData.published}
-                  onChange={(e) => setFormData({ ...formData, published: e.target.value })}
-                  label="Status"
-                >
-                  <MenuItem value={true}>Published</MenuItem>
-                  <MenuItem value={false}>Draft</MenuItem>
-                </Select>
-              </FormControl>
-              <DateTimePicker
-                label="Publish Date/Time (Optional)"
-                value={formData.publish_at}
-                onChange={(newValue) => setFormData({ ...formData, publish_at: newValue })}
-                minDateTime={new Date()}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    margin: 'normal',
-                    helperText: 'Set future date to auto-publish'
-                  }
-                }}
-              />
-            </Box>
-            {formData.publish_at && (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                This blog will be automatically published on {new Date(formData.publish_at).toLocaleString()}
-              </Alert>
-            )}
-          </LocalizationProvider>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={() => editBlog ? handleUpdateBlog(editBlog.id) : handleCreateBlog()}
-          >
-            {editBlog ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </TabPanel>
 
       {/* Category Dialog */}
       <Dialog open={openCategoryDialog} onClose={() => setOpenCategoryDialog(false)} maxWidth="sm" fullWidth>
